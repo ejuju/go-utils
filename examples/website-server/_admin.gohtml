@@ -1,0 +1,39 @@
+{{ define "title" }}Admin{{ end }}
+{{ define "main" }}
+<main>
+	<h1>Admin</h1>
+
+	<section class="tile">
+		<h2>File uploads</h2>
+
+		<section>
+			<h3>Uploaded files</h3>
+
+			<ul>
+				{{ range .Local.Uploads }}
+				<li><a href="{{ . }}">{{ . }}</a></li>
+				{{ end }}
+			</ul>
+
+			{{ if .Local.ListError }}
+			<p style="color: var(--color-error);">{{ .Local.ListError }}</p>
+			{{ end }}
+		</section>
+
+		<form action="/admin/upload" method="post" enctype="multipart/form-data">
+			<h3>Upload public file</h3>
+
+			<label>
+				Upload file
+				<input type="file" name="file">
+			</label>
+
+			<input type="submit" value="Upload">
+
+			{{ if .Local.UploadError }}
+			<p style="color: var(--color-error);">{{ .Local.UploadError }}</p>
+			{{ end }}
+		</form>
+	</section>
+</main>
+{{ end }}

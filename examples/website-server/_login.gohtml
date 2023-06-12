@@ -1,0 +1,26 @@
+{{ define "title" }}Login{{ end }}
+{{ define "main" }}
+<main>
+	<form action="/admin/login" method="post" class="tile">
+		{{ if .Local.FormSuccess }}
+		<p style="color: var(--color-success);">
+			Check your email inbox, you should have received a email.<br />
+			Click the link in the email to login.
+		</p>
+		{{ else }}
+		<h1>Login</h1>
+
+		<label>
+			Email address
+			<input type="email" name="email-address" placeholder="Enter your email address here...">
+		</label>
+
+		<input type="submit" value="Send login link">
+
+		{{ if .Local.FormError }}
+		<p style="color: var(--color-error);">{{ .Local.FormError }}</p>
+		{{ end }}
+		{{ end }}
+	</form>
+</main>
+{{ end }}
