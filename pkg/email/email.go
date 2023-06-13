@@ -6,6 +6,8 @@ import (
 	"net/smtp"
 	"strconv"
 	"strings"
+
+	"github.com/ejuju/go-utils/pkg/validation"
 )
 
 type Email struct {
@@ -39,6 +41,16 @@ type SMTPEmailerConfig struct {
 	Username string `json:"username"`
 	Sender   string `json:"sender"`
 	Password string `json:"password"`
+}
+
+func (c *SMTPEmailerConfig) Validate() error {
+	return validation.Validate(
+		validation.CheckUTF8StringMinLength(c.Host, 1),
+		validation.CheckNetworkPort(c.Port),
+		validation.CheckUTF8StringMinLength(c.Username, 1),
+		validation.CheckEmailAddress(c.Sender),
+		validation.CheckUTF8StringMinLength(c.Password, 1),
+	)
 }
 
 func NewSMTPEmailer(config *SMTPEmailerConfig) Emailer {

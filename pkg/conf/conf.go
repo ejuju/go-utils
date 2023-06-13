@@ -7,20 +7,10 @@ import (
 	"strings"
 )
 
-type LoadErr []error
-
-func (le LoadErr) Error() string {
-	msg := []string{}
-	for i, err := range le {
-		msg = append(msg, fmt.Sprintf("[%d/%d] %s", i+1, len(le), err.Error()))
-	}
-	return strings.Join(msg, ", ")
-}
-
 // Load attempts to get the configuration from the provided loader(s).
 // It returns an error if all loaders fail.
 func Load(into any, loaders ...TryLoader) error {
-	var loadErr LoadErr
+	var loadErr loadErr
 	for _, tryLoad := range loaders {
 		err := tryLoad(into)
 		if err != nil {
@@ -40,6 +30,16 @@ func MustLoad(into any, loaders ...TryLoader) {
 	if err := Load(into, loaders...); err != nil {
 		panic(err)
 	}
+}
+
+type loadErr []error
+
+func (le loadErr) Error() string {
+	msg := []string{}
+	for i, err := range le {
+		msg = append(msg, fmt.Sprintf("[%d/%d] %s", i+1, len(le), err.Error()))
+	}
+	return strings.Join(msg, ", ")
 }
 
 // TryLoader is used to load configuration from a file or an environment variable for example.

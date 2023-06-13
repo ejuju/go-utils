@@ -31,6 +31,13 @@ Features and packages:
 	- [x] Media file storage implementation in local FS directory (`media.LocalFileStorage`)
 - `uid` Unique ID generation
 	- [x] Generate ID of a certain byte length (using crypto/rand) (`uid.NewID`)
+- `validation` Input validation utilities
+	- [x] Validator interface (`validation.Check`)
+	- [x] Check several validators sequentially (`validation.Validate`)
+	- [x] Email address validator (`validation.CheckEmailAddress`)
+	- [x] String match (`validation.CheckStringIs`, `validation.CheckStringIsEither`)
+	- [x] String length (`validation.CheckUTF8StringMinLength`, `validation.CheckUTF8StringMaxLength`)
+	- [x] Network port number (`validation.CheckNetworkPort`)
 - `web` HTTP and web server utilities
 	- [x] HTTP routing (`web.Routes` http.Handler implementation)
 	- [x] Run HTTP server with graceful shutdown (via `web.RunServer`)
@@ -51,5 +58,7 @@ Todo:
 - [ ] Use a Go workspace with one module for packages and one module per example folder.
 - [ ] Add admin space
 - [ ] Add `cms` package
+- [ ] Add `cicd` package
 - [ ] Add `analytics` package
 - [ ] Add `auth` package
+- [ ] Add `kv` package (for implementing DB using )
