@@ -19,8 +19,6 @@ type Forms interface {
 type Form struct {
 	ID           string
 	At           time.Time
-	VisitorHash  string
-	RequestID    string
 	EmailAddress string
 	Message      string
 }
@@ -45,8 +43,6 @@ func ParseAndValidateForm(r *http.Request, emailFieldName, messageFieldName stri
 	return &Form{
 		ID:           uid.MustNewID(12).Hex(),
 		At:           time.Now(),
-		VisitorHash:  r.Header.Get("Visitor-Hash"),
-		RequestID:    r.Header.Get("Request-ID"),
 		EmailAddress: emailAddr.Address,
 		Message:      message,
 	}, nil

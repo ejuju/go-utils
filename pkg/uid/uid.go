@@ -16,5 +16,6 @@ func MustNewID(length int) ID {
 	return buf
 }
 
-func (id ID) Hex() string   { return hex.EncodeToString(id) }
-func (id ID) Bytes() []byte { return id }
+func (id ID) Hex() string    { return hex.EncodeToString(id) }
+func (id ID) String() string { return id.Hex() }
+func (id ID) Bytes() []byte  { return id }

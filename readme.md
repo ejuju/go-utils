@@ -19,3 +19,5 @@ Todo:
 - [ ] Add `cms` package
 - [ ] Add `analytics` package
 - [ ] Add `auth` package
+- [ ] Add `RequestLimitMiddleware` to `pkg/web`
+- [ ] Add `RequestTimeoutMiddleware` to `pkg/web`

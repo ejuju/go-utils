@@ -104,17 +104,18 @@ func newServer() *server {
 
 	// Init HTTP endpoint h
 	h := web.Routes{}
-	h.With(handleHomePage(s), web.MatchPath("/"), web.MatchMethodGET)
-	h.With(handleContactForm(s), web.MatchPath("/contact"), web.MatchMethodPOST)
+	h.Handle(serveHomePage(s), web.MatchPath("/"), web.MatchMethodGET)
+	h.Handle(serveContactForm(s), web.MatchPath("/contact"), web.MatchMethodPOST)
+	h.Handle(web.FileServer("uploads", adminFileUploadRoute+"/"), web.MatchPathPrefix(adminFileUploadRoute+"/"))
 
-	h.With(authMiddleware(s)(handleAdminPage(s)), web.MatchPath(adminRoute), web.MatchMethodGET)
-	h.With(authMiddleware(s)(handleAdminFileUpload(s)), web.MatchPath(adminFileUploadRoute), web.MatchMethodPOST)
-	h.With(handleLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPOST)
-	h.With(handleConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGET)
-	h.With(web.ServeSimpleFavicon(brandColor), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
-	h.With(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGET)
-	h.With(web.FileServer("uploads", adminFileUploadRoute+"/"), web.MatchPathPrefix(adminFileUploadRoute+"/"))
-	h.With(handleNotFound(s), web.CatchAll)
+	h.Handle(authMiddleware(s)(serveAdminPage(s)), web.MatchPath(adminRoute), web.MatchMethodGET)
+	h.Handle(authMiddleware(s)(serveAdminFileUpload(s)), web.MatchPath(adminFileUploadRoute), web.MatchMethodPOST)
+	h.Handle(serveLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPOST)
+	h.Handle(serveConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGET)
+
+	h.Handle(web.ServeSimpleFavicon(brandColor), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
+	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGET)
+	h.Handle(serve404Page(s), web.CatchAll)
 	s.h = h
 
 	// Wrap global middleware

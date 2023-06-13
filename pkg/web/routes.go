@@ -22,7 +22,7 @@ func (rhs Routes) Match(r *http.Request) http.Handler {
 	panic(errors.New("no handler found"))
 }
 
-func (rhs *Routes) With(h http.Handler, matchers ...RequestMatcher) {
+func (rhs *Routes) Handle(h http.Handler, matchers ...RequestMatcher) {
 	*rhs = append(*rhs, &Route{handler: h, matchers: matchers})
 }
 
@@ -32,6 +32,7 @@ type Route struct {
 }
 
 // All matchers must be true for this function to return true.
+// If no matchers is provided, true is also returned.
 func (rh *Route) IsMatch(r *http.Request) bool {
 	for _, matcher := range rh.matchers {
 		if !matcher(r) {
@@ -46,9 +47,6 @@ func (rh *Route) IsMatch(r *http.Request) bool {
 // For example: MatchPath and MatchMethod allow you to match a HTTP request
 // with a certain path and method request to a handler.
 type RequestMatcher func(r *http.Request) bool
-
-// RequestHandlerMatcher implementation that always matches the request.
-func CatchAll(r *http.Request) bool { return true }
 
 // Checks if the request URL path is the same as the provided one.
 func MatchPath(path string) RequestMatcher {
@@ -71,6 +69,11 @@ func MatchMethod(methods ...string) RequestMatcher {
 		return false
 	}
 }
+
+// Defined for readability purposes, to make it explicit that the handlers intents to catch all requests.
+// Used for handling 404s.
+// Equivalent to not using any RequestMatcher in routes.Handle
+func CatchAll(_ *http.Request) bool { return true }
 
 // Utility request method matchers defined for convenience and conciseness.
 func MatchMethodGET(r *http.Request) bool  { return r.Method == http.MethodGet }

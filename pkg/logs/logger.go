@@ -15,23 +15,6 @@ type Logger interface {
 	Log(s string)
 }
 
-// returns the filename and line of a calling function in the stack.
-func getStackLevel(offset int) string {
-	_, f, line, ok := runtime.Caller(offset)
-	if !ok {
-		panic(errors.New("invalid runtime caller offset"))
-	}
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	fpath, err := filepath.Rel(dir, f)
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("%s:%d", fpath, line)
-}
-
 // Logs lines of text with the following format:
 //
 // "%s (%s) %q\n" with timestamp, source code location and log message between quotes.
@@ -68,4 +51,21 @@ func MustOpenLogFile(path string) *os.File {
 		panic(err)
 	}
 	return f
+}
+
+// returns the filename and line of a calling function in the stack.
+func getStackLevel(offset int) string {
+	_, f, line, ok := runtime.Caller(offset)
+	if !ok {
+		panic(errors.New("invalid runtime caller offset"))
+	}
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	fpath, err := filepath.Rel(dir, f)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%s:%d", fpath, line)
 }

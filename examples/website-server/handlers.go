@@ -62,17 +62,17 @@ func authMiddleware(s *server) func(http.Handler) http.Handler {
 	}
 }
 
-func handleNotFound(s *server) http.HandlerFunc {
+func serve404Page(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		renderErrorPage(w, r, http.StatusNotFound, fmt.Errorf("%s not found", r.URL))
 	}
 }
 
-func handleHomePage(s *server) http.HandlerFunc {
+func serveHomePage(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) { renderPage(w, r, http.StatusOK, homePageTmpl, nil) }
 }
 
-func handleContactForm(s *server) http.HandlerFunc {
+func serveContactForm(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse form data
 		form, err := contact.ParseAndValidateForm(r, "email-address", "message")
@@ -96,7 +96,7 @@ func handleContactForm(s *server) http.HandlerFunc {
 	}
 }
 
-func handleAdminPage(s *server) http.HandlerFunc {
+func serveAdminPage(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fnames, err := s.uploads.List()
 		if err != nil {
@@ -107,7 +107,7 @@ func handleAdminPage(s *server) http.HandlerFunc {
 	}
 }
 
-func handleAdminFileUpload(s *server) http.HandlerFunc {
+func serveAdminFileUpload(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseMultipartForm(8000); err != nil {
 			renderPage(w, r, http.StatusBadRequest, adminPageTmpl, map[string]any{"UploadError": err})
@@ -126,7 +126,7 @@ func handleAdminFileUpload(s *server) http.HandlerFunc {
 	}
 }
 
-func handleLoginForm(s *server) http.HandlerFunc {
+func serveLoginForm(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		emailAddr := r.FormValue("email-address")
 		err := s.authenticator.SendLoginLinkByEmail(emailAddr)
@@ -138,7 +138,7 @@ func handleLoginForm(s *server) http.HandlerFunc {
 	}
 }
 
-func handleConfirmLoginForm(s *server) http.HandlerFunc {
+func serveConfirmLoginForm(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.authenticator.LoginWithLink(w, r,
 			func(err error) { renderErrorPage(w, r, http.StatusInternalServerError, err) },
