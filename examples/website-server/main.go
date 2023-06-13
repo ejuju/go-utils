@@ -13,6 +13,7 @@ import (
 	"github.com/ejuju/go-utils/pkg/email"
 	"github.com/ejuju/go-utils/pkg/logs"
 	"github.com/ejuju/go-utils/pkg/media"
+	"github.com/ejuju/go-utils/pkg/validation"
 	"github.com/ejuju/go-utils/pkg/web"
 )
 
@@ -21,6 +22,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type server struct {
+	h             http.Handler
+	conf          config
+	logger        logs.Logger
+	emailer       email.Emailer
+	contactForms  contact.Forms
+	uploads       media.FileStorage
+	authenticator *auth.OTPAuthenticator
 }
 
 type config struct {
@@ -32,16 +43,16 @@ type config struct {
 	SMTPEmailerConfig *email.SMTPEmailerConfig `json:"smtp_emailer_config"` // see pkg/email
 }
 
-var brandColor = color.RGBA{R: 0, G: 250, B: 255, A: 255}
-
-type server struct {
-	h             http.Handler
-	conf          config
-	logger        logs.Logger
-	emailer       email.Emailer
-	contactForms  contact.Forms
-	uploads       media.FileStorage
-	authenticator *auth.OTPAuthenticator
+func (c *config) validate() error {
+	return validation.Validate(
+		validation.CheckStringIsEither(c.Env, "prod", "dev"),
+		validation.CheckNetworkPort(c.Port),
+		validation.CheckEmailAddress(c.AdminEmailAddr),
+		validation.CheckWhen(c.Env == "prod", validation.CheckMultiple(
+			validation.CheckNotNil(c.SMTPEmailerConfig),
+			func() error { return c.SMTPEmailerConfig.Validate() },
+		)),
+	)
 }
 
 const (
@@ -55,12 +66,16 @@ const (
 func newServer() *server {
 	s := &server{}
 
-	// Load and decode config file
+	// Load, decode and validate config
 	conf.MustLoad(&s.conf,
 		conf.TryLoadString(os.Getenv("CONFIG_JSON"), conf.JSONDecoder),
 		conf.TryLoadFile("config.dev.json", conf.JSONDecoder),
 		conf.TryLoadFile("config.json", conf.JSONDecoder),
 	)
+	err := s.conf.validate()
+	if err != nil {
+		panic(err)
+	}
 
 	// Init logger
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
@@ -134,3 +149,5 @@ func (s *server) run() error {
 	s.logger.Log("starting HTTP server on port " + strconv.Itoa(s.conf.Port))
 	return web.RunServer(web.NewServerWithDefaults(s.h, s.conf.Port))
 }
+
+var brandColor = color.RGBA{R: 0, G: 250, B: 255, A: 255}
