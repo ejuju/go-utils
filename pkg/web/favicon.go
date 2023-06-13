@@ -18,7 +18,7 @@ func generateMonochromeImage(size int, c color.Color) *image.RGBA {
 	return img
 }
 
-func ServeSimpleFavicon(c color.Color) http.HandlerFunc {
+func ServeMonochromeFaviconPNG(c color.Color) http.HandlerFunc {
 	// Generate 16x16 pixel monochrome image and encode as PNG
 	buf := &bytes.Buffer{}
 	err := png.Encode(buf, generateMonochromeImage(16, c))

@@ -48,12 +48,12 @@ func NewSMTPEmailer(config *SMTPEmailerConfig) Emailer {
 			email.From = config.Sender
 		}
 		addr := config.Host + ":" + strconv.Itoa(config.Port)
-		return smtp.SendMail(addr, auth, config.Username, email.To, []byte(EmailMessageStr(email)))
+		return smtp.SendMail(addr, auth, config.Username, email.To, []byte(SMTPMsg(email)))
 	}
 }
 
 // generates the message string that will be sent to the SMTP server
-func EmailMessageStr(e *Email) string {
+func SMTPMsg(e *Email) string {
 	headerMap := map[string]string{
 		"From":         e.From,
 		"To":           strings.Join(e.To, "; "),

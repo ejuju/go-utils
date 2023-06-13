@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-type Storage interface {
+type FileStorage interface {
 	Store(id string, r io.Reader) error
 	Open(id string) (io.ReadCloser, error)
 	List() ([]string, error)
@@ -15,13 +15,13 @@ type Storage interface {
 // Media storage implementation.
 // Stores files to a local disk folder.
 
-type LocalDiskStorage struct{ dirPath string }
+type LocalFileStorage struct{ dirPath string }
 
-func NewLocalDiskStorage(dirPath string) *LocalDiskStorage {
-	return &LocalDiskStorage{dirPath: dirPath}
+func NewLocalDiskStorage(dirPath string) *LocalFileStorage {
+	return &LocalFileStorage{dirPath: dirPath}
 }
 
-func (ms *LocalDiskStorage) Store(id string, r io.Reader) error {
+func (ms *LocalFileStorage) Store(id string, r io.Reader) error {
 	f, err := os.Create(ms.getFilePath(id))
 	if err != nil {
 		return err
@@ -30,11 +30,11 @@ func (ms *LocalDiskStorage) Store(id string, r io.Reader) error {
 	return err
 }
 
-func (fs *LocalDiskStorage) Open(id string) (io.ReadCloser, error) {
+func (fs *LocalFileStorage) Open(id string) (io.ReadCloser, error) {
 	return os.Open(fs.getFilePath(id))
 }
 
-func (fs *LocalDiskStorage) List() ([]string, error) {
+func (fs *LocalFileStorage) List() ([]string, error) {
 	out := []string{}
 	return out, filepath.WalkDir(fs.dirPath, func(path string, d os.DirEntry, err error) error {
 		if d.IsDir() {
@@ -45,4 +45,4 @@ func (fs *LocalDiskStorage) List() ([]string, error) {
 	})
 }
 
-func (ms *LocalDiskStorage) getFilePath(id string) string { return filepath.Join(ms.dirPath, id) }
+func (ms *LocalFileStorage) getFilePath(id string) string { return filepath.Join(ms.dirPath, id) }

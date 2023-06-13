@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"image/color"
 	"log"
 	"net/http"
@@ -41,7 +40,7 @@ type server struct {
 	logger        logs.Logger
 	emailer       email.Emailer
 	contactForms  contact.Forms
-	uploads       media.Storage
+	uploads       media.FileStorage
 	authenticator *auth.OTPAuthenticator
 }
 
@@ -57,7 +56,11 @@ func newServer() *server {
 	s := &server{}
 
 	// Load and decode config file
-	conf.MustLoad(&s.conf, conf.LoadFile("config.json", json.Unmarshal))
+	conf.MustLoad(&s.conf,
+		conf.TryLoadString(os.Getenv("CONFIG_JSON"), conf.JSONDecoder),
+		conf.TryLoadFile("config.dev.json", conf.JSONDecoder),
+		conf.TryLoadFile("config.json", conf.JSONDecoder),
+	)
 
 	// Init logger
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
@@ -113,7 +116,7 @@ func newServer() *server {
 	h.Handle(serveLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPOST)
 	h.Handle(serveConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGET)
 
-	h.Handle(web.ServeSimpleFavicon(brandColor), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
+	h.Handle(web.ServeMonochromeFaviconPNG(brandColor), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
 	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGET)
 	h.Handle(serve404Page(s), web.CatchAll)
 	s.h = h

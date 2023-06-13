@@ -13,17 +13,17 @@ import (
 var MaxMessageLength = 800
 
 type Forms interface {
-	SaveNew(*Form) error
+	SaveNew(*FormData) error
 }
 
-type Form struct {
+type FormData struct {
 	ID           string
 	At           time.Time
 	EmailAddress string
 	Message      string
 }
 
-func ParseAndValidateForm(r *http.Request, emailFieldName, messageFieldName string) (*Form, error) {
+func ParseAndValidateForm(r *http.Request, emailFieldName, messageFieldName string) (*FormData, error) {
 	// Validate email address and message length
 	err := r.ParseForm()
 	if err != nil {
@@ -40,7 +40,7 @@ func ParseAndValidateForm(r *http.Request, emailFieldName, messageFieldName stri
 	}
 
 	// Generate unique ID
-	return &Form{
+	return &FormData{
 		ID:           uid.MustNewID(12).Hex(),
 		At:           time.Now(),
 		EmailAddress: emailAddr.Address,
@@ -48,6 +48,6 @@ func ParseAndValidateForm(r *http.Request, emailFieldName, messageFieldName stri
 	}, nil
 }
 
-type MockDB map[string]*Form
+type MockDB map[string]*FormData
 
-func (db MockDB) SaveNew(f *Form) error { db[f.ID] = f; return nil }
+func (db MockDB) SaveNew(f *FormData) error { db[f.ID] = f; return nil }

@@ -10,7 +10,7 @@ func MustParseHTMLTemplate(commonTmpls []string, path string) *template.Template
 }
 
 // Will panic when an error occurs during rendering, make sure you handle panic recovery in a middleware.
-func RenderHTMLTmpl(
+func RenderHTMLTemplate(
 	w http.ResponseWriter,
 	statusCode int,
 	t *template.Template,

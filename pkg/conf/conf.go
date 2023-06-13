@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -18,7 +19,7 @@ func (le LoadErr) Error() string {
 
 // Load attempts to get the configuration from the provided loader(s).
 // It returns an error if all loaders fail.
-func Load(into any, loaders ...Loader) error {
+func Load(into any, loaders ...TryLoader) error {
 	var loadErr LoadErr
 	for _, tryLoad := range loaders {
 		err := tryLoad(into)
@@ -35,16 +36,16 @@ func Load(into any, loaders ...Loader) error {
 }
 
 // MustLoad is like Load but panics if all loaders fail.
-func MustLoad(into any, loaders ...Loader) {
+func MustLoad(into any, loaders ...TryLoader) {
 	if err := Load(into, loaders...); err != nil {
 		panic(err)
 	}
 }
 
-// Loader is used to load configuration from a file or an environment variable for example.
-type Loader func(into any) error
+// TryLoader is used to load configuration from a file or an environment variable for example.
+type TryLoader func(into any) error
 
-func LoadFile(fpath string, decoder Decoder) Loader {
+func TryLoadFile(fpath string, decoder Decoder) TryLoader {
 	return func(into any) error {
 		fbytes, err := os.ReadFile(fpath)
 		if err != nil {
@@ -54,6 +55,12 @@ func LoadFile(fpath string, decoder Decoder) Loader {
 	}
 }
 
+func TryLoadString(s string, decoder Decoder) TryLoader {
+	return func(into any) error { return decoder([]byte(s), into) }
+}
+
 // Decoder is used to decode the data in loaded from a file.
 // For example: json.Unmarshal implements this interface.
 type Decoder func(raw []byte, into any) error
+
+func JSONDecoder(raw []byte, into any) error { return json.Unmarshal(raw, into) }

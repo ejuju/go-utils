@@ -35,7 +35,7 @@ func (s *server) onPanic(w http.ResponseWriter, r *http.Request, err any) {
 }
 
 func renderPage(w http.ResponseWriter, r *http.Request, statusCode int, t *template.Template, data map[string]any) {
-	web.RenderHTMLTmpl(w, statusCode, t, layoutTmpl, map[string]any{
+	web.RenderHTMLTemplate(w, statusCode, t, layoutTmpl, map[string]any{
 		"Request": r,
 		"Local":   data,
 	})
