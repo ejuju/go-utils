@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -52,7 +53,11 @@ func renderErrorPage(w http.ResponseWriter, r *http.Request, statusCode int, err
 func authMiddleware(s *server) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session := s.authenticator.Authenticate(w, r)
+			session, err := s.authenticator.Authenticate(w, r)
+			if err != nil {
+				renderErrorPage(w, r, http.StatusInternalServerError, errors.New("authentication failed"))
+				return
+			}
 			if session == nil {
 				renderPage(w, r, http.StatusForbidden, loginPageTmpl, nil)
 				return
@@ -96,6 +101,27 @@ func serveContactForm(s *server) http.HandlerFunc {
 	}
 }
 
+func serveLoginForm(s *server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		emailAddr := r.FormValue("email-address")
+		err := s.authenticator.SendLoginLinkByEmail(emailAddr)
+		if err != nil {
+			renderErrorPage(w, r, http.StatusBadRequest, err)
+			return
+		}
+		renderPage(w, r, http.StatusOK, loginPageTmpl, map[string]any{"FormSuccess": true})
+	}
+}
+
+func serveConfirmLoginForm(s *server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.authenticator.LoginWithLink(w, r,
+			func(err error) { renderErrorPage(w, r, http.StatusInternalServerError, err) },
+			func(err error) { renderErrorPage(w, r, http.StatusBadRequest, err) },
+		)
+	}
+}
+
 func serveAdminPage(s *server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fnames, err := s.uploads.List()
@@ -123,26 +149,5 @@ func serveAdminFileUpload(s *server) http.HandlerFunc {
 			return
 		}
 		http.Redirect(w, r, adminRoute, http.StatusSeeOther)
-	}
-}
-
-func serveLoginForm(s *server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		emailAddr := r.FormValue("email-address")
-		err := s.authenticator.SendLoginLinkByEmail(emailAddr)
-		if err != nil {
-			renderErrorPage(w, r, http.StatusBadRequest, err)
-			return
-		}
-		renderPage(w, r, http.StatusOK, loginPageTmpl, map[string]any{"FormSuccess": true})
-	}
-}
-
-func serveConfirmLoginForm(s *server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		s.authenticator.LoginWithLink(w, r,
-			func(err error) { renderErrorPage(w, r, http.StatusInternalServerError, err) },
-			func(err error) { renderErrorPage(w, r, http.StatusBadRequest, err) },
-		)
 	}
 }

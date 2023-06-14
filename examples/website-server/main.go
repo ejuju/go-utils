@@ -57,6 +57,7 @@ func (c *conf) validate() error {
 
 const (
 	contactRoute           = "/contact"
+	UploadsRoute           = "/uploads"
 	adminRoute             = "/admin"
 	adminFileUploadRoute   = adminRoute + "/upload"
 	adminLoginRoute        = adminRoute + "/login"
@@ -68,9 +69,8 @@ func newServer() *server {
 
 	// Load, decode and validate config
 	config.MustLoad(&s.conf,
-		config.TryLoadString(os.Getenv("CONFIG_JSON"), config.JSONDecoder), // try to load JSON from env variable
-		config.TryLoadFile("config.dev.json", config.JSONDecoder),          // try to load JSON from dev file
-		config.TryLoadFile("config.json", config.JSONDecoder),              // try to load JSON from config file
+		config.TryLoadFile("config.dev.json", config.JSONDecoder), // load config.dev.json file
+		config.TryLoadFile("config.json", config.JSONDecoder),     // or load config.json file
 	)
 	err := s.conf.validate()
 	if err != nil {
@@ -78,12 +78,12 @@ func newServer() *server {
 	}
 
 	// Init logger
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	if s.conf.Env == "prod" {
 		s.logger = logs.NewTextLogger(os.Stderr)
 	} else {
 		s.logger = logs.NewTextLogger(os.Stderr, logs.MustOpenLogFile("/tmp/app_logs.txt"))
 	}
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile) // also init std/logger
 
 	// Init emailer
 	if s.conf.Env == "prod" {
@@ -98,11 +98,13 @@ func newServer() *server {
 	} else {
 		s.authenticator = auth.NewOTPAuthenticator(&auth.OTPAuthenticatorConfig{
 			Host:                s.conf.Host,
-			Users:               auth.NewStaticUsers(s.conf.AdminEmailAddr),
-			Emailer:             s.emailer,
 			ConfirmLoginRoute:   adminConfirmLoginRoute,
 			SuccessfulLoginPath: adminRoute,
 			CookieName:          "auth",
+			Emailer:             s.emailer,
+			Users:               auth.NewMockUsers("admin@local"),
+			Sessions:            auth.MockSessions{},
+			OTPs:                auth.MockOTPs{},
 		})
 	}
 
@@ -120,11 +122,18 @@ func newServer() *server {
 		s.uploads = media.NewLocalDiskStorage("uploads")
 	}
 
+	// Init HTTP handler
+	s.initHTTPHandler()
+
+	return s
+}
+
+func (s *server) initHTTPHandler() {
 	// Init HTTP endpoint h
 	h := web.Routes{}
 	h.Handle(serveHomePage(s), web.MatchPath("/"), web.MatchMethodGET)
 	h.Handle(serveContactForm(s), web.MatchPath("/contact"), web.MatchMethodPOST)
-	h.Handle(web.FileServer("uploads", adminFileUploadRoute+"/"), web.MatchPathPrefix(adminFileUploadRoute+"/"))
+	h.Handle(web.FileServer("uploads", UploadsRoute+"/"), web.MatchPathPrefix(UploadsRoute+"/"))
 
 	h.Handle(authMiddleware(s)(serveAdminPage(s)), web.MatchPath(adminRoute), web.MatchMethodGET)
 	h.Handle(authMiddleware(s)(serveAdminFileUpload(s)), web.MatchPath(adminFileUploadRoute), web.MatchMethodPOST)
@@ -139,8 +148,6 @@ func newServer() *server {
 	// Wrap global middleware
 	s.h = web.AccessLoggingMiddleware(s.logger)(s.h)
 	s.h = web.PanicRecoveryMiddleware(s.onPanic)(s.h)
-
-	return s
 }
 
 // Log startup info

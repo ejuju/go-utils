@@ -4,14 +4,20 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/ejuju/go-utils/pkg/email"
 	"github.com/ejuju/go-utils/pkg/uid"
+	"github.com/ejuju/go-utils/pkg/validation"
 )
+
+type Sessions interface {
+	Create(*Session) error
+	Find(string) (*Session, error)
+	Delete(string) error
+}
 
 type Session struct {
 	ID        string
@@ -19,9 +25,19 @@ type Session struct {
 	UserID    string
 }
 
+type Users interface {
+	FindByEmailAddress(string) (*User, error)
+}
+
 type User struct {
 	ID           string
 	EmailAddress string
+}
+
+type OTPs interface {
+	Create(*OTP) error
+	Find(string) (*OTP, error)
+	Delete(string) error
 }
 
 type OTP struct {
@@ -29,40 +45,6 @@ type OTP struct {
 	code      string
 	createdAt time.Time
 }
-
-func NewAuthCookie(name, value string, ttl time.Duration) *http.Cookie {
-	return &http.Cookie{
-		Name:     name,
-		HttpOnly: true,
-		Value:    value,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   int(ttl.Seconds()),
-		Path:     "/",
-		Secure:   true,
-	}
-}
-
-type StaticUsers map[string]*User
-
-func NewStaticUsers(emailAddrs ...string) StaticUsers {
-	out := StaticUsers{}
-	for _, addr := range emailAddrs {
-		id := uid.MustNewID(12).Hex()
-		out[id] = &User{ID: id, EmailAddress: addr}
-	}
-	return out
-}
-
-func (users StaticUsers) FindByEmailAddress(addr string) (*User, error) {
-	for _, u := range users {
-		if u.EmailAddress == addr {
-			return u, nil
-		}
-	}
-	return nil, fmt.Errorf("user with email address %q not found", addr)
-}
-
-func (users StaticUsers) FindByID(id string) *User { return users[id] }
 
 func NewOTP(userID string) *OTP {
 	return &OTP{
@@ -72,27 +54,39 @@ func NewOTP(userID string) *OTP {
 	}
 }
 
+var ErrNotFound = errors.New("not found")
+
 type OTPAuthenticatorConfig struct {
 	Host                string
 	ConfirmLoginRoute   string
 	SuccessfulLoginPath string
-	Users               StaticUsers
 	CookieName          string
 	Emailer             email.Emailer
+	Users               Users
+	OTPs                OTPs
+	Sessions            Sessions
 }
 
-type OTPAuthenticator struct {
-	conf     *OTPAuthenticatorConfig
-	otps     map[string]*OTP
-	sessions map[string]*Session
+func (conf *OTPAuthenticatorConfig) validate() error {
+	return validation.Validate(
+		validation.CheckUTF8StringMinLength(conf.Host, 1),
+		validation.CheckUTF8StringMinLength(conf.ConfirmLoginRoute, 1),
+		validation.CheckUTF8StringMinLength(conf.SuccessfulLoginPath, 1),
+		validation.CheckUTF8StringMinLength(conf.CookieName, 1),
+		validation.CheckNotNil(conf.Emailer),
+		validation.CheckNotNil(conf.Users),
+		validation.CheckNotNil(conf.OTPs),
+		validation.CheckNotNil(conf.Sessions),
+	)
 }
+
+type OTPAuthenticator struct{ conf *OTPAuthenticatorConfig }
 
 func NewOTPAuthenticator(config *OTPAuthenticatorConfig) *OTPAuthenticator {
-	return &OTPAuthenticator{
-		conf:     config,
-		sessions: map[string]*Session{},
-		otps:     map[string]*OTP{},
+	if err := config.validate(); err != nil {
+		panic(err)
 	}
+	return &OTPAuthenticator{conf: config}
 }
 
 func (authr *OTPAuthenticator) SendLoginLinkByEmail(addr string) error {
@@ -101,7 +95,10 @@ func (authr *OTPAuthenticator) SendLoginLinkByEmail(addr string) error {
 		return err
 	}
 	otp := NewOTP(user.ID)
-	authr.otps[user.ID] = otp
+	err = authr.conf.OTPs.Create(otp)
+	if err != nil {
+		return err
+	}
 	link := fmt.Sprintf("%s%s?email-address=%s&code=%s",
 		authr.conf.Host,
 		authr.conf.ConfirmLoginRoute,
@@ -127,9 +124,12 @@ func (authr *OTPAuthenticator) LoginWithLink(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Get OTP for provided user
-	otp, ok := authr.otps[user.ID]
-	if !ok {
+	otp, err := authr.conf.OTPs.Find(otpCode)
+	if errors.Is(err, ErrNotFound) {
 		onErr(fmt.Errorf("OTP not found for email address: %q", emailAddr))
+		return
+	} else if err != nil {
+		onInternalErr(err)
 		return
 	}
 
@@ -138,33 +138,91 @@ func (authr *OTPAuthenticator) LoginWithLink(w http.ResponseWriter, r *http.Requ
 		onErr(errors.New("invalid OTP"))
 		return
 	}
+	// OK, valid credentials
 
-	// OK
-	authr.sessions[user.ID] = &Session{ID: uid.MustNewID(12).Hex(), UserID: user.ID, CreatedAt: time.Now()}
-	http.SetCookie(w, NewAuthCookie(authr.conf.CookieName, authr.sessions[user.ID].ID, time.Hour))
+	// Delete OTP
+	err = authr.conf.OTPs.Delete(otpCode)
+	if err != nil {
+		onInternalErr(err)
+		return
+	}
+
+	// Create session
+	s := &Session{ID: uid.MustNewID(12).Hex(), UserID: user.ID, CreatedAt: time.Now()}
+	err = authr.conf.Sessions.Create(s)
+	if err != nil {
+		onInternalErr(err)
+		return
+	}
+
+	// Set auth cookie and redirect to page
+	http.SetCookie(w, newAuthCookie(authr.conf.CookieName, s.ID, time.Hour))
 	http.Redirect(w, r, authr.conf.SuccessfulLoginPath, http.StatusSeeOther)
 }
 
-func (authr *OTPAuthenticator) Authenticate(w http.ResponseWriter, r *http.Request) *Session {
+func (authr *OTPAuthenticator) Authenticate(w http.ResponseWriter, r *http.Request) (*Session, error) {
 	// Get auth cookie
 	cookie, err := r.Cookie(authr.conf.CookieName)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return nil, nil
 	}
-	log.Println(cookie.Value)
+
 	// Get session by ID
-	session, ok := authr.sessions[cookie.Value]
-	if !ok {
-		http.SetCookie(w, NewAuthCookie(authr.conf.CookieName, "", 0))
-		return nil
+	session, err := authr.conf.Sessions.Find(cookie.Value)
+	if err != nil {
+		http.SetCookie(w, newAuthCookie(authr.conf.CookieName, "", 0))
+		return nil, err
 	}
-	log.Println(session)
+
 	// Check if session is expired
 	if time.Since(session.CreatedAt) > time.Hour {
-		http.SetCookie(w, NewAuthCookie(authr.conf.CookieName, "", 0))
-		return nil
+		http.SetCookie(w, newAuthCookie(authr.conf.CookieName, "", 0))
+		return nil, nil
 	}
-	log.Println("non expired")
-	return session
+
+	return session, nil
 }
+
+func newAuthCookie(name, value string, ttl time.Duration) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		HttpOnly: true,
+		Value:    value,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   int(ttl.Seconds()),
+		Path:     "/",
+		Secure:   true,
+	}
+}
+
+type MockUsers map[string]*User
+
+func NewMockUsers(emailAddrs ...string) MockUsers {
+	out := MockUsers{}
+	for _, addr := range emailAddrs {
+		id := uid.MustNewID(12).Hex()
+		out[id] = &User{ID: id, EmailAddress: addr}
+	}
+	return out
+}
+
+func (users MockUsers) FindByEmailAddress(addr string) (*User, error) {
+	for _, u := range users {
+		if u.EmailAddress == addr {
+			return u, nil
+		}
+	}
+	return nil, fmt.Errorf("user with email address %q not found", addr)
+}
+
+type MockSessions map[string]*Session
+
+func (sessions MockSessions) Create(s *Session) error          { sessions[s.ID] = s; return nil }
+func (sessions MockSessions) Find(id string) (*Session, error) { return sessions[id], nil }
+func (sessions MockSessions) Delete(id string) error           { delete(sessions, id); return nil }
+
+type MockOTPs map[string]*OTP
+
+func (otps MockOTPs) Create(otp *OTP) error        { otps[otp.code] = otp; return nil }
+func (otps MockOTPs) Find(id string) (*OTP, error) { return otps[id], nil }
+func (otps MockOTPs) Delete(id string) error       { delete(otps, id); return nil }
