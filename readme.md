@@ -7,11 +7,11 @@ For protoypes, demos and learning purposes.
 
 Features and packages:
 <!-- - `auth` Authentication utilities -->
-- `conf` Configuration file loading utilities
-	- [x] Load configuration (`conf.Load`) from at least one source (can try several files)
-	- [x] Support loading configuration from file (`conf.TryLoadFile`) or string `conf.TryLoadString`
-	- [x] Support "JSON" format (`conf.JSONDecoder`)
-	- [ ] Support ".env" format (`conf.DotEnvDecoder`)
+- `config` Configuration file loading utilities
+	- [x] Load configuration (`config.Load`) from at least one source (can try several files)
+	- [x] Support loading configuration from file (`config.TryLoadFile`) or string `config.TryLoadString`
+	- [x] Support "JSON" format (`config.JSONDecoder`)
+	- [ ] Support ".env" format (`config.DotEnvDecoder`)
 - `contact` Contact form utilities
 	- [x] Contact form DB interface (`contact.Forms`)
 	- [x] Contact form struct definition (`contact.FormData`)

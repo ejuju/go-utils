@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/ejuju/go-utils/pkg/auth"
-	"github.com/ejuju/go-utils/pkg/conf"
+	"github.com/ejuju/go-utils/pkg/config"
 	"github.com/ejuju/go-utils/pkg/contact"
 	"github.com/ejuju/go-utils/pkg/email"
 	"github.com/ejuju/go-utils/pkg/logs"
@@ -26,7 +26,7 @@ func main() {
 
 type server struct {
 	h             http.Handler
-	conf          config
+	conf          conf
 	logger        logs.Logger
 	emailer       email.Emailer
 	contactForms  contact.Forms
@@ -34,7 +34,7 @@ type server struct {
 	authenticator *auth.OTPAuthenticator
 }
 
-type config struct {
+type conf struct {
 	Env               string                   `json:"env"`                 // ex: "prod" or "dev"
 	Host              string                   `json:"host"`                // ex: "example.com"
 	Port              int                      `json:"port"`                // ex: 8080
@@ -43,7 +43,7 @@ type config struct {
 	SMTPEmailerConfig *email.SMTPEmailerConfig `json:"smtp_emailer_config"` // see pkg/email
 }
 
-func (c *config) validate() error {
+func (c *conf) validate() error {
 	return validation.Validate(
 		validation.CheckStringIsEither(c.Env, "prod", "dev"),
 		validation.CheckNetworkPort(c.Port),
@@ -67,10 +67,10 @@ func newServer() *server {
 	s := &server{}
 
 	// Load, decode and validate config
-	conf.MustLoad(&s.conf,
-		conf.TryLoadString(os.Getenv("CONFIG_JSON"), conf.JSONDecoder),
-		conf.TryLoadFile("config.dev.json", conf.JSONDecoder),
-		conf.TryLoadFile("config.json", conf.JSONDecoder),
+	config.MustLoad(&s.conf,
+		config.TryLoadString(os.Getenv("CONFIG_JSON"), config.JSONDecoder), // try to load JSON from env variable
+		config.TryLoadFile("config.dev.json", config.JSONDecoder),          // try to load JSON from dev file
+		config.TryLoadFile("config.json", config.JSONDecoder),              // try to load JSON from config file
 	)
 	err := s.conf.validate()
 	if err != nil {
