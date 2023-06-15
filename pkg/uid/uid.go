@@ -13,17 +13,12 @@ func NewID(length int) (ID, error) {
 	return buf, err
 }
 
-// Tries 5 times before panicking
 func MustNewID(length int) ID {
-	var id ID
-	var err error
-	for i := 0; i < 5; i++ {
-		id, err = NewID(length)
-		if err == nil {
-			return id
-		}
+	id, err := NewID(length)
+	if err != nil {
+		panic(err)
 	}
-	panic(err)
+	return id
 }
 
 func (id ID) Hex() string    { return hex.EncodeToString(id) }
