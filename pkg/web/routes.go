@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Routes represents a list of HTTP handlers.
+// Routes represents a list of routes.
 type Routes []*Route
 
 func (rhs Routes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +26,7 @@ func (rhs *Routes) Handle(h http.Handler, matchers ...RequestMatcher) {
 	*rhs = append(*rhs, &Route{handler: h, matchers: matchers})
 }
 
+// Route represents a HTTP handler with request matchers.
 type Route struct {
 	handler  http.Handler
 	matchers []RequestMatcher

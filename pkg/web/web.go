@@ -102,19 +102,32 @@ func PermanentRedirectHandler(toURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, toURL, http.StatusPermanentRedirect) }
 }
 
-func VisitorHash(r *http.Request) string {
+func IPAddressFromRequest(r *http.Request, useXForwardedFor bool) net.IP {
 	// get true IP
-	ipAddr := r.Header.Get("X-Forwarded-For")
-	if ipAddr == "" {
-		ipAddr = net.ParseIP(r.RemoteAddr).String()
+	ipAddr := ""
+	if useXForwardedFor {
+		ipAddr = r.Header.Get("X-Forwarded-For")
 	}
+	if ipAddr == "" {
+		ipAddr = r.RemoteAddr
+		var err error
+		ipAddr, _, err = net.SplitHostPort(ipAddr)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return net.ParseIP(ipAddr)
+}
+
+func VisitorHash(r *http.Request, checkXForwardedFor bool) string {
 	// Hash IP addr and user-agent
 	hash := sha1.New()
-	_, err := hash.Write([]byte(ipAddr + r.UserAgent()))
+	_, err := hash.Write([]byte(IPAddressFromRequest(r, checkXForwardedFor).String() + r.UserAgent()))
 	if err != nil {
 		panic(err)
 	}
-	// Return base64 hex encoded hash
+
+	// Return base32 hex encoded hash
 	return base32.StdEncoding.EncodeToString(hash.Sum(nil))
 }
 

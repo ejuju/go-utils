@@ -34,13 +34,14 @@ type server struct {
 }
 
 type conf struct {
-	Env               string                   `json:"env"`                 // ex: "prod" or "dev"
-	Host              string                   `json:"host"`                // ex: "example.com"
-	Port              int                      `json:"port"`                // ex: 8080
-	Version           string                   `json:"version"`             // ex: "1.0.2"
-	AdminEmailAddr    string                   `json:"admin_email_addr"`    // ex: "admin@example.com"
-	SMTPEmailerConfig *email.SMTPEmailerConfig `json:"smtp_emailer_config"` // see pkg/email
-	LogFilePath       string                   `json:"log_file_path"`       // ex: "/tmp/my_app.log"
+	Env               string                   `json:"env"`                  // ex: "prod" or "dev"
+	Host              string                   `json:"host"`                 // ex: "example.com"
+	Port              int                      `json:"port"`                 // ex: 8080
+	Version           string                   `json:"version"`              // ex: "1.0.2"
+	AdminEmailAddr    string                   `json:"admin_email_addr"`     // ex: "admin@example.com"
+	SMTPEmailerConfig *email.SMTPEmailerConfig `json:"smtp_emailer_config"`  // see pkg/email
+	LogFilePath       string                   `json:"log_file_path"`        // ex: "/tmp/my_app.log"
+	UsesXForwardedFor bool                     `json:"uses_x_forwarded_for"` // use if the server is behind a reverse proxy
 }
 
 func (c *conf) validate() error {

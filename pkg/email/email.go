@@ -10,6 +10,8 @@ import (
 	"github.com/ejuju/go-utils/pkg/validation"
 )
 
+type Emailer func(*Email) error
+
 type Email struct {
 	From          string
 	To            []string
@@ -17,7 +19,7 @@ type Email struct {
 	PlainTextBody string
 }
 
-// generates the message string that will be sent to the SMTP server
+// Generates the message string that will be sent to the SMTP server
 func (e *Email) SMTPMessage() string {
 	headerMap := map[string]string{
 		"From":         e.From,
@@ -33,8 +35,6 @@ func (e *Email) SMTPMessage() string {
 	body := e.PlainTextBody
 	return header + "\r\n" + body + "\r\n"
 }
-
-type Emailer func(*Email) error
 
 func NewMockEmailer(w io.Writer, injectErr error) Emailer {
 	return func(email *Email) error {

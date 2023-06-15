@@ -19,7 +19,7 @@ func CheckMultiple(checks ...Check) Check {
 		for i, v := range checks {
 			err := v()
 			if err != nil {
-				return fmt.Errorf("at index %d: %w", i, err)
+				return fmt.Errorf("check failed [%d/%d]: %w", i, len(checks), err)
 			}
 		}
 		return nil

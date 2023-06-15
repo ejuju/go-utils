@@ -29,7 +29,7 @@ func (s *server) onPanic(w http.ResponseWriter, r *http.Request, err any) {
 	// Log error
 	stackstr := strings.ReplaceAll(string(debug.Stack()), "\n", " ")
 	stackstr = strings.ReplaceAll(string(stackstr), "\t", " ")
-	s.logger.Log(fmt.Sprintf("%s %v %s", web.VisitorHash(r), err, stackstr))
+	s.logger.Log(fmt.Sprintf("%s %v %s", web.VisitorHash(r, s.conf.UsesXForwardedFor), err, stackstr))
 
 	// Respond to client
 	renderErrorPage(w, r, http.StatusInternalServerError, fmt.Errorf("%v", err))
