@@ -62,6 +62,7 @@ Todo:
 - [ ] Add `cicd` package
 - [ ] Add `kv` package (for implementing DB using a key-value store like BoltDB)
 
-V2:
+V2 (For later):
 - [ ] Add `analytics` package
 - [ ] Add `livechat` package (live support chat)
+- [ ] Add `ab` package for A/B testing

@@ -12,6 +12,15 @@ import (
 	"github.com/ejuju/go-utils/pkg/web"
 )
 
+const (
+	contactRoute           = "/contact"
+	UploadsRoute           = "/uploads"
+	adminRoute             = "/admin"
+	adminFileUploadRoute   = adminRoute + "/upload"
+	adminLoginRoute        = adminRoute + "/login"
+	adminConfirmLoginRoute = adminRoute + "/confirm-login"
+)
+
 var commonTmpls = []string{"_layout.gohtml"}
 
 const layoutTmpl = "layout"
