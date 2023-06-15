@@ -76,17 +76,17 @@ func newServer() *server {
 
 	// Init HTTP endpoint h
 	h := web.Routes{}
-	h.Handle(serveHomePage(s), web.MatchPath("/"), web.MatchMethodGET)
-	h.Handle(serveContactForm(s), web.MatchPath("/contact"), web.MatchMethodPOST)
+	h.Handle(serveHomePage(s), web.MatchPath("/"), web.MatchMethodGet)
+	h.Handle(serveContactForm(s), web.MatchPath("/contact"), web.MatchMethodPost)
 	h.Handle(web.FileServer("uploads", UploadsRoute+"/"), web.MatchPathPrefix(UploadsRoute+"/"))
 
-	h.Handle(authMiddleware(s)(serveAdminPage(s)), web.MatchPath(adminRoute), web.MatchMethodGET)
-	h.Handle(authMiddleware(s)(serveAdminFileUpload(s)), web.MatchPath(adminFileUploadRoute), web.MatchMethodPOST)
-	h.Handle(serveLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPOST)
-	h.Handle(serveConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGET)
+	h.Handle(authMiddleware(s)(serveAdminPage(s)), web.MatchPath(adminRoute), web.MatchMethodGet)
+	h.Handle(authMiddleware(s)(serveAdminFileUpload(s)), web.MatchPath(adminFileUploadRoute), web.MatchMethodPost)
+	h.Handle(serveLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPost)
+	h.Handle(serveConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGet)
 
-	h.Handle(web.ServeMonochromeFaviconPNG(nil), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
-	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGET)
+	h.Handle(web.ServeMonochromeFaviconPNG(nil), web.MatchPath("/favicon.ico"), web.MatchMethodGet)
+	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGet)
 	h.Handle(serve404Page(s), web.CatchAll)
 	s.h = h
 

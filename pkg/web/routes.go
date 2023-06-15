@@ -76,5 +76,5 @@ func MatchMethod(methods ...string) RequestMatcher {
 func CatchAll(_ *http.Request) bool { return true }
 
 // Utility request method matchers defined for convenience and conciseness.
-func MatchMethodGET(r *http.Request) bool  { return r.Method == http.MethodGet }
-func MatchMethodPOST(r *http.Request) bool { return r.Method == http.MethodPost }
+func MatchMethodGet(r *http.Request) bool  { return r.Method == http.MethodGet }
+func MatchMethodPost(r *http.Request) bool { return r.Method == http.MethodPost }
