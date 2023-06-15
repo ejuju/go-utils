@@ -17,6 +17,23 @@ type Email struct {
 	PlainTextBody string
 }
 
+// generates the message string that will be sent to the SMTP server
+func (e *Email) SMTPMessage() string {
+	headerMap := map[string]string{
+		"From":         e.From,
+		"To":           strings.Join(e.To, "; "),
+		"Subject":      e.Subject,
+		"MIME-Version": "1.0",
+		"Content-Type": "text/plain",
+	}
+	header := ""
+	for key, val := range headerMap {
+		header += key + ":" + val + "\r\n"
+	}
+	body := e.PlainTextBody
+	return header + "\r\n" + body + "\r\n"
+}
+
 type Emailer func(*Email) error
 
 func NewMockEmailer(w io.Writer, injectErr error) Emailer {
@@ -60,23 +77,6 @@ func NewSMTPEmailer(config *SMTPEmailerConfig) Emailer {
 			email.From = config.Sender
 		}
 		addr := config.Host + ":" + strconv.Itoa(config.Port)
-		return smtp.SendMail(addr, auth, config.Username, email.To, []byte(SMTPMsg(email)))
+		return smtp.SendMail(addr, auth, config.Username, email.To, []byte(email.SMTPMessage()))
 	}
-}
-
-// generates the message string that will be sent to the SMTP server
-func SMTPMsg(e *Email) string {
-	headerMap := map[string]string{
-		"From":         e.From,
-		"To":           strings.Join(e.To, "; "),
-		"Subject":      e.Subject,
-		"MIME-Version": "1.0",
-		"Content-Type": "text/plain",
-	}
-	header := ""
-	for key, val := range headerMap {
-		header += key + ":" + val + "\r\n"
-	}
-	body := e.PlainTextBody
-	return header + "\r\n" + body + "\r\n"
 }

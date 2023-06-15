@@ -40,6 +40,7 @@ type conf struct {
 	Version           string                   `json:"version"`             // ex: "1.0.2"
 	AdminEmailAddr    string                   `json:"admin_email_addr"`    // ex: "admin@example.com"
 	SMTPEmailerConfig *email.SMTPEmailerConfig `json:"smtp_emailer_config"` // see pkg/email
+	LogFilePath       string                   `json:"log_file_path"`       // ex: "/tmp/my_app.log"
 }
 
 func (c *conf) validate() error {
@@ -78,9 +79,9 @@ func newServer() *server {
 
 	// Init logger
 	if s.conf.Env == "prod" {
-		s.logger = logs.NewTextLogger(os.Stderr)
+		panic("todo: set logger for prod")
 	} else {
-		s.logger = logs.NewTextLogger(os.Stderr, logs.MustOpenLogFile("/tmp/app_logs.txt"))
+		s.logger = logs.NewTextLogger(os.Stderr, logs.MustOpenLogFile(s.conf.LogFilePath))
 	}
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile) // also init std/logger
 
@@ -93,7 +94,7 @@ func newServer() *server {
 
 	// Init authenticator
 	if s.conf.Env == "prod" {
-		panic("todo")
+		panic("todo: set authenticator for prod")
 	} else {
 		s.authenticator = auth.NewOTPAuthenticator(&auth.OTPAuthenticatorConfig{
 			Host:                s.conf.Host,
@@ -109,14 +110,14 @@ func newServer() *server {
 
 	// Init contact form DB
 	if s.conf.Env == "prod" {
-		panic("todo")
+		panic("todo: set prod DB for contact form submissions")
 	} else {
 		s.contactForms = contact.MockDB{}
 	}
 
 	// Init media storage
 	if s.conf.Env == "prod" {
-		panic("todo")
+		panic("todo: set prod storage for file uploads")
 	} else {
 		s.uploads = media.NewLocalDiskStorage("uploads")
 	}

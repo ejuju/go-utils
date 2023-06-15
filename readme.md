@@ -62,3 +62,4 @@ Todo:
 - [ ] Add `cicd` package
 - [ ] Add `analytics` package
 - [ ] Add `kv` package (for implementing DB using)
+- [ ] Add `livechat` package (live support chat)
