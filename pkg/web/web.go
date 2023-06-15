@@ -157,3 +157,7 @@ func ServeRaw(v []byte) http.HandlerFunc {
 func FileServer(dirPath, httpPrefix string) http.Handler {
 	return http.StripPrefix(httpPrefix, http.FileServer(http.Dir(dirPath)))
 }
+
+func Wrap(h http.Handler, middleware func(http.Handler) http.Handler) http.Handler {
+	return middleware(h)
+}

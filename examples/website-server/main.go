@@ -91,8 +91,8 @@ func newServer() *server {
 	s.h = h
 
 	// Wrap global middleware
-	s.h = web.AccessLoggingMiddleware(s.logger)(s.h)
-	s.h = web.PanicRecoveryMiddleware(s.onPanic)(s.h)
+	s.h = web.Wrap(s.h, web.AccessLoggingMiddleware(s.logger))
+	s.h = web.Wrap(s.h, web.PanicRecoveryMiddleware(s.onPanic))
 
 	return s
 }
