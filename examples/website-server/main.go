@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"log"
 	"net/http"
 	"os"
@@ -140,7 +139,7 @@ func (s *server) initHTTPHandler() {
 	h.Handle(serveLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPOST)
 	h.Handle(serveConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGET)
 
-	h.Handle(web.ServeMonochromeFaviconPNG(brandColor), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
+	h.Handle(web.ServeMonochromeFaviconPNG(nil), web.MatchPath("/favicon.ico"), web.MatchMethodGET)
 	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGET)
 	h.Handle(serve404Page(s), web.CatchAll)
 	s.h = h
@@ -156,5 +155,3 @@ func (s *server) run() error {
 	s.logger.Log("starting HTTP server on port " + strconv.Itoa(s.conf.Port))
 	return web.RunServer(web.NewServerWithDefaults(s.h, s.conf.Port))
 }
-
-var brandColor = color.RGBA{R: 0, G: 250, B: 255, A: 255}
