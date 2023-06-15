@@ -1,7 +1,6 @@
 package web
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 )
@@ -10,16 +9,16 @@ import (
 type Routes []*Route
 
 func (rhs Routes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rhs.Match(r).ServeHTTP(w, r)
+	rhs.RequestHandler(r).ServeHTTP(w, r)
 }
 
-func (rhs Routes) Match(r *http.Request) http.Handler {
+func (rhs Routes) RequestHandler(r *http.Request) http.Handler {
 	for _, rh := range rhs {
-		if rh.IsMatch(r) {
+		if rh.Match(r) {
 			return rh.handler
 		}
 	}
-	panic(errors.New("no handler found"))
+	panic("no match found")
 }
 
 func (rhs *Routes) Handle(h http.Handler, matchers ...RequestMatcher) {
@@ -34,7 +33,7 @@ type Route struct {
 
 // All matchers must be true for this function to return true.
 // If no matchers is provided, true is also returned.
-func (rh *Route) IsMatch(r *http.Request) bool {
+func (rh *Route) Match(r *http.Request) bool {
 	for _, matcher := range rh.matchers {
 		if !matcher(r) {
 			return false

@@ -69,10 +69,10 @@ type OTPAuthenticatorConfig struct {
 
 func (conf *OTPAuthenticatorConfig) validate() error {
 	return validation.Validate(
-		validation.CheckUTF8StringMinLength(conf.Host, 1),
-		validation.CheckUTF8StringMinLength(conf.ConfirmLoginRoute, 1),
-		validation.CheckUTF8StringMinLength(conf.SuccessfulLoginPath, 1),
-		validation.CheckUTF8StringMinLength(conf.CookieName, 1),
+		validation.CheckStringNotEmpty(conf.Host),
+		validation.CheckStringNotEmpty(conf.ConfirmLoginRoute),
+		validation.CheckStringNotEmpty(conf.SuccessfulLoginPath),
+		validation.CheckStringNotEmpty(conf.CookieName),
 		validation.CheckNotNil(conf.Emailer),
 		validation.CheckNotNil(conf.Users),
 		validation.CheckNotNil(conf.OTPs),

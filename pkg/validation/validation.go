@@ -42,6 +42,15 @@ func CheckEmailAddress(addr string) Check {
 	}
 }
 
+func CheckStringNotEmpty(in string) Check {
+	return func() error {
+		if in == "" {
+			return errors.New("empty string")
+		}
+		return nil
+	}
+}
+
 // Inclusive
 func CheckUTF8StringMinLength(in string, min int) Check {
 	return func() error {

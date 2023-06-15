@@ -60,6 +60,8 @@ Todo:
 - [ ] Add admin space
 - [ ] Add `cms` package
 - [ ] Add `cicd` package
+- [ ] Add `kv` package (for implementing DB using a key-value store like BoltDB)
+
+V2:
 - [ ] Add `analytics` package
-- [ ] Add `kv` package (for implementing DB using)
 - [ ] Add `livechat` package (live support chat)
