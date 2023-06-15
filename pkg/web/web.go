@@ -42,7 +42,7 @@ func (srec *httpStatusRecorder) WriteHeader(statusCode int) {
 	srec.ResponseWriter.WriteHeader(statusCode)
 }
 
-type PanicHandler func(w http.ResponseWriter, r *http.Request, err any)
+type PanicHandler func(err any, w http.ResponseWriter, r *http.Request)
 
 // Panic recovery middleware logs the recovered error and executes the onPanic callback function.
 func PanicRecoveryMiddleware(onPanic PanicHandler) func(h http.Handler) http.Handler {
@@ -51,7 +51,7 @@ func PanicRecoveryMiddleware(onPanic PanicHandler) func(h http.Handler) http.Han
 			defer func() {
 				if err := recover(); err != nil {
 					if onPanic != nil {
-						onPanic(w, r, err)
+						onPanic(err, w, r)
 					}
 				}
 			}()

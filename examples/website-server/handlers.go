@@ -32,7 +32,7 @@ var (
 	loginPageTmpl = web.MustParseHTMLTemplate(commonTmpls, "_login.gohtml")
 )
 
-func (s *server) onPanic(w http.ResponseWriter, r *http.Request, err any) {
+func (s *server) onPanic(err any, w http.ResponseWriter, r *http.Request) {
 	// TODO: notify admin
 
 	// Log error
