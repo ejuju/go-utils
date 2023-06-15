@@ -17,6 +17,8 @@
 			--color-success: hsl(120, 100%, 70%);
 			--color-brand: hsl(59, 100%, 65%);
 			--color-brand-contrast: var(--color-bg-0);
+
+			--border-radius: 4px;
 		}
 
 		*,
@@ -61,8 +63,10 @@
 		.button {
 			background: var(--color-neutral);
 			border: none;
+			border-radius: var(--border-radius);
 			background-color: var(--color-brand);
 			color: var(--color-brand-contrast);
+			padding: 8px 16px;
 		}
 
 		input[type="text"],
@@ -71,6 +75,7 @@
 			background-color: var(--color-bg-0);
 			padding: 4px 8px;
 			border: none;
+			border-radius: var(--border-radius);
 		}
 
 		textarea {
