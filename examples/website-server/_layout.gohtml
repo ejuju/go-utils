@@ -73,13 +73,25 @@
 		input[type="email"],
 		textarea {
 			background-color: var(--color-bg-0);
-			padding: 4px 8px;
 			border: none;
 			border-radius: var(--border-radius);
 		}
 
+		input[type="text"],
+		input[type="email"] {
+			padding: 4px 0;
+			text-indent: 8px;
+		}
+
 		textarea {
+			padding: 4px 8px;
 			resize: vertical;
+		}
+
+		form>label {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
 		}
 
 		ul {

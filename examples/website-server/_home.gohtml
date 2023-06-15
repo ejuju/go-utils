@@ -9,8 +9,14 @@
 		<p style="color: var(--color-success);">Thanks for your message!<br />I will reply ASAP.</p>
 		{{ else }}
 		<h2>Get in touch</h2>
-		<input type="email" name="email-address" placeholder="Enter your email address here...">
-		<textarea name="message" rows="5" placeholder="Enter your message here..."></textarea>
+		<label>
+			Email address
+			<input type="email" name="email-address" placeholder="Enter your email address here...">
+		</label>
+		<label>
+			Message
+			<textarea name="message" rows="5" placeholder="Enter your message here..."></textarea>
+		</label>
 		<input type="submit" value="Send">
 		{{ end }}
 
