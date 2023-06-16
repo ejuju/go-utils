@@ -56,6 +56,8 @@ func NewOTP(userID string) *OTP {
 
 var ErrNotFound = errors.New("not found")
 
+func NewErrNotFound(id string) error { return fmt.Errorf("%q %w") }
+
 type OTPAuthenticatorConfig struct {
 	Host                string
 	ConfirmLoginRoute   string
@@ -212,17 +214,29 @@ func (users MockUsers) FindByEmailAddress(addr string) (*User, error) {
 			return u, nil
 		}
 	}
-	return nil, fmt.Errorf("user with email address %q not found", addr)
+	return nil, NewErrNotFound(addr)
 }
 
 type MockSessions map[string]*Session
 
-func (sessions MockSessions) Create(s *Session) error          { sessions[s.ID] = s; return nil }
-func (sessions MockSessions) Find(id string) (*Session, error) { return sessions[id], nil }
-func (sessions MockSessions) Delete(id string) error           { delete(sessions, id); return nil }
+func (sessions MockSessions) Create(s *Session) error { sessions[s.ID] = s; return nil }
+func (sessions MockSessions) Find(id string) (*Session, error) {
+	out, ok := sessions[id]
+	if !ok {
+		return nil, NewErrNotFound(id)
+	}
+	return out, nil
+}
+func (sessions MockSessions) Delete(id string) error { delete(sessions, id); return nil }
 
 type MockOTPs map[string]*OTP
 
-func (otps MockOTPs) Create(otp *OTP) error        { otps[otp.code] = otp; return nil }
-func (otps MockOTPs) Find(id string) (*OTP, error) { return otps[id], nil }
-func (otps MockOTPs) Delete(id string) error       { delete(otps, id); return nil }
+func (otps MockOTPs) Create(otp *OTP) error { otps[otp.code] = otp; return nil }
+func (otps MockOTPs) Find(id string) (*OTP, error) {
+	out, ok := otps[id]
+	if !ok {
+		return nil, NewErrNotFound(id)
+	}
+	return out, nil
+}
+func (otps MockOTPs) Delete(id string) error { delete(otps, id); return nil }
