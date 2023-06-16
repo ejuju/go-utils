@@ -54,9 +54,10 @@ func NewOTP(userID string) *OTP {
 	}
 }
 
+var ErrSessionExpired = errors.New("session expired")
 var ErrNotFound = errors.New("not found")
 
-func NewErrNotFound(id string) error { return fmt.Errorf("%q %w") }
+func NewErrNotFound(id string) error { return fmt.Errorf("%s %w", id, ErrNotFound) }
 
 type OTPAuthenticatorConfig struct {
 	Host                string
@@ -166,7 +167,7 @@ func (authr *OTPAuthenticator) Authenticate(w http.ResponseWriter, r *http.Reque
 	// Get auth cookie
 	cookie, err := r.Cookie(authr.conf.CookieName)
 	if err != nil {
-		return nil, nil
+		return nil, NewErrNotFound("auth cookie")
 	}
 
 	// Get session by ID
@@ -179,7 +180,7 @@ func (authr *OTPAuthenticator) Authenticate(w http.ResponseWriter, r *http.Reque
 	// Check if session is expired
 	if time.Since(session.CreatedAt) > time.Hour {
 		http.SetCookie(w, newAuthCookie(authr.conf.CookieName, "", 0))
-		return nil, nil
+		return nil, ErrSessionExpired
 	}
 
 	return session, nil
