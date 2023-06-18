@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ejuju/go-utils/pkg/auth"
 	"github.com/ejuju/go-utils/pkg/config"
 	"github.com/ejuju/go-utils/pkg/contact"
 	"github.com/ejuju/go-utils/pkg/email"
@@ -29,13 +28,12 @@ func init() {
 }
 
 type server struct {
-	h             http.Handler
-	conf          conf
-	logger        logs.Logger
-	emailer       email.Emailer
-	contactForms  contact.Forms
-	uploads       media.FileStorage
-	authenticator *auth.OTPAuthenticator
+	h            http.Handler
+	conf         conf
+	logger       logs.Logger
+	emailer      email.Emailer
+	contactForms contact.Forms
+	uploads      media.FileStorage
 }
 
 func newServer() *server {
@@ -54,7 +52,6 @@ func newServer() *server {
 		panic("not implemented yet")
 		// s.emailer = email.NewSMTPEmailer(s.conf.SMTPEmailerConfig)
 		// todo: set logger for prod
-		// todo: set authenticator for prod
 		// todo: set prod DB for contact form submissions
 		// todo: set prod storage for file uploads
 	case "dev":
@@ -62,29 +59,13 @@ func newServer() *server {
 		s.emailer = email.NewMockEmailer(os.Stderr, nil)
 		s.uploads = media.NewLocalDiskStorage("uploads")
 		s.contactForms = contact.MockDB{}
-		s.authenticator = auth.NewOTPAuthenticator(&auth.OTPAuthenticatorConfig{
-			Host:                s.conf.Host,
-			ConfirmLoginRoute:   adminConfirmLoginRoute,
-			SuccessfulLoginPath: adminRoute,
-			CookieName:          "auth",
-			Emailer:             s.emailer,
-			Users:               auth.NewMockUsers("admin@local"),
-			Sessions:            auth.MockSessions{},
-			OTPs:                auth.MockOTPs{},
-		})
 	}
 
 	// Init HTTP endpoint h
 	h := web.Routes{}
 	h.Handle(serveHomePage(s), web.MatchPath("/"), web.MatchMethodGet)
 	h.Handle(serveContactForm(s), web.MatchPath("/contact"), web.MatchMethodPost)
-	h.Handle(web.FileServer("uploads", UploadsRoute+"/"), web.MatchPathPrefix(UploadsRoute+"/"))
-
-	h.Handle(authMiddleware(s)(serveAdminPage(s)), web.MatchPath(adminRoute), web.MatchMethodGet)
-	h.Handle(authMiddleware(s)(serveAdminFileUpload(s)), web.MatchPath(adminFileUploadRoute), web.MatchMethodPost)
-	h.Handle(serveLoginForm(s), web.MatchPath(adminLoginRoute), web.MatchMethodPost)
-	h.Handle(serveConfirmLoginForm(s), web.MatchPath(adminConfirmLoginRoute), web.MatchMethodGet)
-
+	h.Handle(web.FileServer("public", PublicFilesRoute+"/"), web.MatchPathPrefix(PublicFilesRoute+"/"))
 	h.Handle(web.ServeMonochromeFaviconPNG(nil), web.MatchPath("/favicon.ico"), web.MatchMethodGet)
 	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGet)
 	h.Handle(serve404Page(s), web.CatchAll)

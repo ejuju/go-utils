@@ -6,8 +6,6 @@ Focused on utilities needed for building web services.
 For protoypes, demos and learning purposes.
 
 Features and packages:
-- `auth` Authentication utilities
-	- [x] Passwordless authenticator (with email magic link) (`auth.OTPAuthenticator`)
 - `config` Configuration file loading utilities
 	- [x] Load configuration (`config.Load`) from at least one source (can try several files)
 	- [x] Support loading configuration from file (`config.TryLoadFile`) or string `config.TryLoadString`
@@ -58,7 +56,6 @@ Features and packages:
 Todo:
 - [ ] Use a Go workspace with one module for packages and one module per example folder.
 - [ ] Add admin space
-- [ ] Add `cms` package
 - [ ] Add `cicd` package
 - [ ] Add `kv` package (for implementing DB using a key-value store like BoltDB)
 
