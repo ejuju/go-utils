@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -59,13 +58,5 @@ func getStackLevel(offset int) string {
 	if !ok {
 		panic(errors.New("invalid runtime caller offset"))
 	}
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	fpath, err := filepath.Rel(dir, f)
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("%s:%d", fpath, line)
+	return fmt.Sprintf("%s:%d", f, line)
 }
