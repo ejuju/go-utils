@@ -61,6 +61,7 @@ func NewErrNotFound(id string) error { return fmt.Errorf("%s %w", id, ErrNotFoun
 
 type OTPAuthenticatorConfig struct {
 	Host                string
+	Scheme              string
 	ConfirmLoginRoute   string
 	SuccessfulLoginPath string
 	CookieName          string
@@ -73,6 +74,7 @@ type OTPAuthenticatorConfig struct {
 func (conf *OTPAuthenticatorConfig) validate() error {
 	return validation.Validate(
 		validation.CheckStringNotEmpty(conf.Host),
+		validation.CheckStringIsEither(conf.Scheme, "http", "https"),
 		validation.CheckStringNotEmpty(conf.ConfirmLoginRoute),
 		validation.CheckStringNotEmpty(conf.SuccessfulLoginPath),
 		validation.CheckStringNotEmpty(conf.CookieName),
@@ -102,7 +104,8 @@ func (authr *OTPAuthenticator) SendLoginLinkByEmail(addr string) error {
 	if err != nil {
 		return err
 	}
-	link := fmt.Sprintf("%s%s?email-address=%s&code=%s",
+	link := fmt.Sprintf("%s%s%s?email-address=%s&code=%s",
+		authr.conf.Scheme,
 		authr.conf.Host,
 		authr.conf.ConfirmLoginRoute,
 		url.QueryEscape(addr),
