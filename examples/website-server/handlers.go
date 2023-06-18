@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 
 const (
 	contactRoute           = "/contact"
-	UploadsRoute           = "/uploads"
+	PublicFilesRoute       = "/uploads"
 	adminRoute             = "/admin"
 	adminFileUploadRoute   = adminRoute + "/upload"
 	adminLoginRoute        = adminRoute + "/login"
@@ -28,8 +27,6 @@ const layoutTmpl = "layout"
 var (
 	errorPageTmpl = web.MustParseHTMLTemplate(commonTmpls, "_error.gohtml")
 	homePageTmpl  = web.MustParseHTMLTemplate(commonTmpls, "_home.gohtml")
-	adminPageTmpl = web.MustParseHTMLTemplate(commonTmpls, "_admin.gohtml")
-	loginPageTmpl = web.MustParseHTMLTemplate(commonTmpls, "_login.gohtml")
 )
 
 func (s *server) onPanic(err any, w http.ResponseWriter, r *http.Request) {
@@ -57,23 +54,6 @@ func renderErrorPage(w http.ResponseWriter, r *http.Request, statusCode int, err
 		"StatusCode": statusCode,
 		"StatusText": http.StatusText(statusCode),
 	})
-}
-
-func authMiddleware(s *server) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, err := s.authenticator.Authenticate(w, r)
-			if err != nil {
-				renderErrorPage(w, r, http.StatusInternalServerError, errors.New("authentication failed"))
-				return
-			}
-			if session == nil {
-				renderPage(w, r, http.StatusForbidden, loginPageTmpl, nil)
-				return
-			}
-			h.ServeHTTP(w, r)
-		})
-	}
 }
 
 func serve404Page(s *server) http.HandlerFunc {
@@ -107,56 +87,5 @@ func serveContactForm(s *server) http.HandlerFunc {
 		}
 
 		renderPage(w, r, http.StatusOK, homePageTmpl, map[string]any{"FormSuccess": true})
-	}
-}
-
-func serveLoginForm(s *server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		emailAddr := r.FormValue("email-address")
-		err := s.authenticator.SendLoginLinkByEmail(emailAddr)
-		if err != nil {
-			renderErrorPage(w, r, http.StatusBadRequest, err)
-			return
-		}
-		renderPage(w, r, http.StatusOK, loginPageTmpl, map[string]any{"FormSuccess": true})
-	}
-}
-
-func serveConfirmLoginForm(s *server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		s.authenticator.LoginWithLink(w, r,
-			func(err error) { renderErrorPage(w, r, http.StatusInternalServerError, err) },
-			func(err error) { renderErrorPage(w, r, http.StatusBadRequest, err) },
-		)
-	}
-}
-
-func serveAdminPage(s *server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fnames, err := s.uploads.List()
-		if err != nil {
-			renderPage(w, r, http.StatusInternalServerError, adminPageTmpl, map[string]any{"ListError": err})
-			return
-		}
-		renderPage(w, r, http.StatusOK, adminPageTmpl, map[string]any{"Uploads": fnames})
-	}
-}
-
-func serveAdminFileUpload(s *server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseMultipartForm(8000); err != nil {
-			renderPage(w, r, http.StatusBadRequest, adminPageTmpl, map[string]any{"UploadError": err})
-			return
-		}
-		f, fh, err := r.FormFile("file")
-		if err != nil {
-			renderPage(w, r, http.StatusBadRequest, adminPageTmpl, map[string]any{"UploadError": err})
-			return
-		}
-		if err = s.uploads.Store(fh.Filename, f); err != nil {
-			renderPage(w, r, http.StatusInternalServerError, adminPageTmpl, map[string]any{"UploadError": err})
-			return
-		}
-		http.Redirect(w, r, adminRoute, http.StatusSeeOther)
 	}
 }
