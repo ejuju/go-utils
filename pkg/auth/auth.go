@@ -104,7 +104,7 @@ func (authr *OTPAuthenticator) SendLoginLinkByEmail(addr string) error {
 	if err != nil {
 		return err
 	}
-	link := fmt.Sprintf("%s%s%s?email-address=%s&code=%s",
+	link := fmt.Sprintf("%s://%s%s?email-address=%s&code=%s",
 		authr.conf.Scheme,
 		authr.conf.Host,
 		authr.conf.ConfirmLoginRoute,
