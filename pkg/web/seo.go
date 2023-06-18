@@ -29,6 +29,10 @@ func DisallowedRobotsTXT(routes []string) string {
 	return out
 }
 
+func ServeRobotsTXT(disallowedRoutes ...string) http.HandlerFunc {
+	return ServeRaw([]byte(DisallowedRobotsTXT(disallowedRoutes)))
+}
+
 // Website JSON+LD schema
 type JSONLDWebsiteSchema struct {
 	Context string `json:"@context"`

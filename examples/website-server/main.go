@@ -68,6 +68,7 @@ func newServer() *server {
 	h.Handle(web.FileServer("public", PublicFilesRoute+"/"), web.MatchPathPrefix(PublicFilesRoute+"/"))
 	h.Handle(web.ServeMonochromeFaviconPNG(nil), web.MatchPath("/favicon.ico"), web.MatchMethodGet)
 	h.Handle(web.ServeSitemapXML("example.com", "/"), web.MatchPath("/sitemap.xml"), web.MatchMethodGet)
+	h.Handle(web.ServeRobotsTXT("/hidden"), web.MatchPath("/robots.txt"), web.MatchMethodGet)
 	h.Handle(serve404Page(s), web.CatchAll)
 	s.h = h
 
