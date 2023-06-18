@@ -31,8 +31,8 @@ type Route struct {
 	matchers []RequestMatcher
 }
 
-// All matchers must be true for this function to return true.
-// If no matchers is provided, true is also returned.
+// If all matchers yield true, this function returns true.
+// If there are no matchers provided, true is also returned.
 func (rh *Route) Match(r *http.Request) bool {
 	for _, matcher := range rh.matchers {
 		if !matcher(r) {
@@ -70,11 +70,53 @@ func MatchMethod(methods ...string) RequestMatcher {
 	}
 }
 
+// Utility request method matchers defined for convenience and conciseness.
+func MatchMethodGet(r *http.Request) bool     { return r.Method == http.MethodGet }
+func MatchMethodHead(r *http.Request) bool    { return r.Method == http.MethodHead }
+func MatchMethodPost(r *http.Request) bool    { return r.Method == http.MethodPost }
+func MatchMethodPut(r *http.Request) bool     { return r.Method == http.MethodPut }
+func MatchMethodPatch(r *http.Request) bool   { return r.Method == http.MethodPatch }
+func MatchMethodDelete(r *http.Request) bool  { return r.Method == http.MethodDelete }
+func MatchMethodConnect(r *http.Request) bool { return r.Method == http.MethodConnect }
+func MatchMethodOptions(r *http.Request) bool { return r.Method == http.MethodOptions }
+func MatchMethodTrace(r *http.Request) bool   { return r.Method == http.MethodTrace }
+
 // Defined for readability purposes, to make it explicit that the handlers intents to catch all requests.
 // Used for handling 404s.
-// Equivalent to not using any RequestMatcher in routes.Handle
+// Equivalent to not using any RequestMatcher in routes.Handle, as this will match any request.
 func CatchAll(_ *http.Request) bool { return true }
 
-// Utility request method matchers defined for convenience and conciseness.
-func MatchMethodGet(r *http.Request) bool  { return r.Method == http.MethodGet }
-func MatchMethodPost(r *http.Request) bool { return r.Method == http.MethodPost }
+// Matches a certain host. Ignores port if present.
+func MatchHostname(s string) RequestMatcher {
+	return func(r *http.Request) bool { return r.URL.Hostname() == s }
+}
+
+// Matches a certain domain name (SLD + TLD).
+func MatchDomainName(s string) RequestMatcher {
+	return func(r *http.Request) bool {
+		hostname := r.URL.Hostname()
+		parts := strings.Split(hostname, ".")
+		if len(parts) >= 3 {
+			// if subdomain is included, remove subdomain(s) from parts
+			hostname = strings.Join(parts[len(parts)-2:], ".")
+		}
+		return hostname == s
+	}
+}
+
+// Matches a certain subdomain.
+//
+// NB: Treats ccSLD just as normal SLDs (cf. unit test)
+func MatchSubdomain(s string) RequestMatcher {
+	return func(r *http.Request) bool {
+		if strings.Count(r.URL.Host, ".") <= 1 {
+			return false
+		}
+		return strings.Split(r.URL.Host, ".")[0] == s
+	}
+}
+
+// Matches a certain HTTP header key and value.
+func MatchHeader(k, v string) RequestMatcher {
+	return func(r *http.Request) bool { return r.Header.Get(k) == v }
+}

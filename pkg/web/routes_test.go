@@ -51,3 +51,84 @@ func TestRoutes(t *testing.T) {
 		}
 	})
 }
+
+func TestRequestMatchers(t *testing.T) {
+	t.Run("can match sub-domain", func(t *testing.T) {
+		tests := []struct {
+			subdomain  string
+			requestURL string
+			wantMatch  bool
+		}{
+			{
+				subdomain:  "www",
+				requestURL: "www.example.com",
+				wantMatch:  true,
+			},
+			{
+				subdomain:  "www",
+				requestURL: "admin.example.com",
+				wantMatch:  false,
+			},
+			{
+				subdomain:  "example",
+				requestURL: "example.com",
+				wantMatch:  false, // should not match, SLDs are not treated as subdomains
+			},
+			{
+				subdomain:  "example",
+				requestURL: "example.co.uk",
+				wantMatch:  true, // should match, treat ccSLD just as normal SLDs
+			},
+		}
+
+		for _, test := range tests {
+			req := httptest.NewRequest(http.MethodGet, "http://"+test.requestURL, nil)
+			gotMatch := MatchSubdomain(test.subdomain)(req)
+			if gotMatch != test.wantMatch {
+				t.Fatalf("subdomain %q and URL %q: want %v but got %v", test.subdomain, test.requestURL, test.wantMatch, gotMatch)
+			}
+		}
+	})
+
+	t.Run("can match a domain name", func(t *testing.T) {
+		tests := []struct {
+			domain     string
+			requestURL string
+			wantMatch  bool
+		}{
+			{
+				domain:     "example.com",
+				requestURL: "example.com",
+				wantMatch:  true,
+			},
+			{
+				domain:     "example.com",
+				requestURL: "www.example.com",
+				wantMatch:  true,
+			},
+			{
+				domain:     "example.com",
+				requestURL: "subdomain1.subdomain2.example.com",
+				wantMatch:  true,
+			},
+			{
+				domain:     "example.com",
+				requestURL: "another.com",
+				wantMatch:  false,
+			},
+			{
+				domain:     "localhost",
+				requestURL: "localhost",
+				wantMatch:  true,
+			},
+		}
+
+		for _, test := range tests {
+			req := httptest.NewRequest(http.MethodGet, "http://"+test.requestURL, nil)
+			gotMatch := MatchDomainName(test.domain)(req)
+			if gotMatch != test.wantMatch {
+				t.Fatalf("domain %q and URL %q: want %v but got %v", test.domain, test.requestURL, test.wantMatch, gotMatch)
+			}
+		}
+	})
+}

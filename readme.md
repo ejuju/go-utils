@@ -66,3 +66,4 @@ V2 (For later):
 - [ ] Add `analytics` package
 - [ ] Add `livechat` package (live support chat)
 - [ ] Add `ab` package for A/B testing
+- [ ] Add `shorturl` package for URL shortening and redirection with click tracking
