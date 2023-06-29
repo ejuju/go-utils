@@ -32,7 +32,7 @@ func (n *ElementNode) HTMLString() string {
 
 	// Add children
 	for _, child := range n.Children {
-		out += "\n" + child.HTMLString()
+		out += "\n\t" + child.HTMLString() + "\n"
 	}
 
 	// Add closing tag
