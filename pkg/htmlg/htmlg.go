@@ -40,7 +40,7 @@ func (n *ElementNode) HTMLString() string {
 
 type Page struct{ Root *ElementNode }
 
-func NewPage(quirksMode bool, attrs map[string]string, children ...HTMLStringer) *Page {
+func NewPage(attrs map[string]string, children ...HTMLStringer) *Page {
 	return &Page{Root: TagHTML.With(attrs, children...)}
 }
 
