@@ -2,7 +2,7 @@ package htmlg
 
 type Tag string
 
-func (t Tag) With(attrs Attributes, children ...HTMLStringer) *ElementNode {
+func (t Tag) With(attrs Attrs, children ...HTMLStringer) *ElementNode {
 	return &ElementNode{Tag: t, Attrs: attrs, Children: children}
 }
 

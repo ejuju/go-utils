@@ -8,13 +8,14 @@ type TextNode string
 
 func (n TextNode) HTMLString() string { return string(n) }
 
+// Element attribute
+type Attrs map[string]string
+
 type ElementNode struct {
 	Tag      Tag
-	Attrs    Attributes
+	Attrs    Attrs
 	Children []HTMLStringer
 }
-
-type Attributes map[string]string
 
 func (n *ElementNode) HTMLString() string {
 	// Add opening tag and attributes if any
@@ -31,7 +32,7 @@ func (n *ElementNode) HTMLString() string {
 
 	// Add children
 	for _, child := range n.Children {
-		out += child.HTMLString()
+		out += "\n" + child.HTMLString()
 	}
 
 	// Add closing tag
@@ -40,7 +41,7 @@ func (n *ElementNode) HTMLString() string {
 
 type Page struct{ Root *ElementNode }
 
-func NewPage(attrs map[string]string, children ...HTMLStringer) *Page {
+func NewPage(attrs Attrs, children ...HTMLStringer) *Page {
 	return &Page{Root: TagHTML.With(attrs, children...)}
 }
 
@@ -55,7 +56,19 @@ type PageHead struct {
 func NewPageHead(ph PageHead) *ElementNode {
 	children := []HTMLStringer{}
 	children = append(children, TagTitle.Text(ph.Title))
-	children = append(children, TagLink.With(Attributes{"rel": "icon", "href": ph.FaviconURL}))
-	children = append(children, TagMeta.With(Attributes{"description": ph.Description}))
+	children = append(children, TagLink.With(Attrs{"rel": "icon", "href": ph.FaviconURL}))
+	children = append(children, TagMeta.With(Attrs{"description": ph.Description}))
 	return TagHead.With(nil, children...)
+}
+
+type Fragment []HTMLStringer
+
+func NewFragment(els ...HTMLStringer) Fragment { return Fragment(els) }
+
+func (frag Fragment) HTMLString() string {
+	out := ""
+	for _, el := range frag {
+		out += el.HTMLString()
+	}
+	return out
 }
