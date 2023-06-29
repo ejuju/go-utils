@@ -76,7 +76,7 @@ func NewServerWithDefaults(h http.Handler, port int) *http.Server {
 
 // Listens for incoming connections and
 // await interrupt signal (or server error) for graceful shutdown
-func RunServer(s *http.Server) error {
+func RunServer(s *http.Server, onShutown func() error) error {
 	// Start HTTP server in seperate goroutine
 	errc := make(chan error, 1)
 	go func() { errc <- s.ListenAndServe() }()
@@ -86,6 +86,12 @@ func RunServer(s *http.Server) error {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	select {
 	case <-done:
+		if onShutown != nil {
+			err := onShutown()
+			if err != nil {
+				panic(err)
+			}
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		shutdownErr := s.Shutdown(ctx)
@@ -158,6 +164,7 @@ func FileServer(dirPath, httpPrefix string) http.Handler {
 	return http.StripPrefix(httpPrefix, http.FileServer(http.Dir(dirPath)))
 }
 
+// Like append but for middleware functions.
 func Wrap(h http.Handler, middleware func(http.Handler) http.Handler) http.Handler {
 	return middleware(h)
 }
