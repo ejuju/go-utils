@@ -2,11 +2,13 @@ package htmlg
 
 type Tag string
 
+func (t Tag) Element() *ElementNode { return &ElementNode{Tag: t} }
+
 func (t Tag) With(attrs Attrs, children ...HTMLStringer) *ElementNode {
 	return &ElementNode{Tag: t, Attrs: attrs, Children: children}
 }
 
-// Creates a new node with the given text as a child text node.
+// Creates a new element with this tag and set the given text as a child text node.
 func (t Tag) Text(s string) *ElementNode { return t.With(nil, TextNode(s)) }
 
 const (

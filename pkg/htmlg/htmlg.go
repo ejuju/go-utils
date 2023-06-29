@@ -1,7 +1,16 @@
 package htmlg
 
+import "net/http"
+
 type HTMLStringer interface {
 	HTMLString() string
+}
+
+func Render(hs HTMLStringer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte(hs.HTMLString()))
+	}
 }
 
 type TextNode string
@@ -39,6 +48,23 @@ func (n *ElementNode) HTMLString() string {
 	return out + "</" + string(n.Tag) + ">"
 }
 
+func (n *ElementNode) WithAttr(k, v string) *ElementNode  { n.Attrs[k] = v; return n }
+func (n *ElementNode) WithAttrs(attrs Attrs) *ElementNode { n.Attrs = attrs; return n }
+func (n *ElementNode) WithChildren(children ...HTMLStringer) *ElementNode {
+	n.Children = children
+	return n
+}
+
+func (n *ElementNode) AppendChildren(children ...HTMLStringer) *ElementNode {
+	n.Children = append(n.Children, children...)
+	return n
+}
+
+func (n *ElementNode) WrapText(s string) *ElementNode {
+	n.Children = []HTMLStringer{TextNode(s)}
+	return n
+}
+
 type Page struct{ Root *ElementNode }
 
 func NewPage(attrs Attrs, children ...HTMLStringer) *Page {
@@ -46,20 +72,6 @@ func NewPage(attrs Attrs, children ...HTMLStringer) *Page {
 }
 
 func (p *Page) HTMLString() string { return "<!DOCTYPE html>\n" + p.Root.HTMLString() }
-
-type PageHead struct {
-	Title       string
-	FaviconURL  string
-	Description string
-}
-
-func NewPageHead(ph PageHead) *ElementNode {
-	children := []HTMLStringer{}
-	children = append(children, TagTitle.Text(ph.Title))
-	children = append(children, TagLink.With(Attrs{"rel": "icon", "href": ph.FaviconURL}))
-	children = append(children, TagMeta.With(Attrs{"description": ph.Description}))
-	return TagHead.With(nil, children...)
-}
 
 type Fragment []HTMLStringer
 
