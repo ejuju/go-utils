@@ -43,13 +43,8 @@ func (n *ElementNode) HTMLString() string {
 
 func (n *ElementNode) WithAttr(k, v string) *ElementNode  { n.Attrs[k] = v; return n }
 func (n *ElementNode) WithAttrs(attrs Attrs) *ElementNode { n.Attrs = attrs; return n }
-func (n *ElementNode) WithChildren(children ...HTMLStringer) *ElementNode {
+func (n *ElementNode) Wrap(children ...HTMLStringer) *ElementNode {
 	n.Children = children
-	return n
-}
-
-func (n *ElementNode) AppendChildren(children ...HTMLStringer) *ElementNode {
-	n.Children = append(n.Children, children...)
 	return n
 }
 
@@ -58,10 +53,15 @@ func (n *ElementNode) WrapText(s string) *ElementNode {
 	return n
 }
 
+func (n *ElementNode) AppendChildren(children ...HTMLStringer) *ElementNode {
+	n.Children = append(n.Children, children...)
+	return n
+}
+
 type Page struct{ Root *ElementNode }
 
 func NewPage(attrs Attrs, children ...HTMLStringer) *Page {
-	return &Page{Root: TagHTML.El().WithAttrs(attrs).WithChildren(children...)}
+	return &Page{Root: TagHTML.El().WithAttrs(attrs).Wrap(children...)}
 }
 
 func (p *Page) HTMLString() string { return "<!DOCTYPE html>\n" + p.Root.HTMLString() }
