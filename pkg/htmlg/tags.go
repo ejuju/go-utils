@@ -69,6 +69,7 @@ const (
 	TagNav        Tag = "nav"
 	TagOl         Tag = "ol"
 	TagObject     Tag = "object"
+	TagP          Tag = "p"
 	TagPicture    Tag = "picture"
 	TagPortal     Tag = "portal"
 	TagPre        Tag = "pre"
