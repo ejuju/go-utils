@@ -83,7 +83,7 @@ func (s *server) run() error {
 	// Log startup info
 	// and listen for incoming connections (with graceful shutdown)
 	s.logger.Log("starting HTTP server on port " + strconv.Itoa(s.conf.Port))
-	return web.RunServer(web.NewServerWithDefaults(s.h, s.conf.Port))
+	return web.RunServer(web.NewServerWithDefaults(s.h, s.conf.Port), nil)
 }
 
 type conf struct {

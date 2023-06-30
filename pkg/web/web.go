@@ -20,25 +20,25 @@ import (
 func AccessLoggingMiddleware(logger logs.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			resrec := &httpStatusRecorder{ResponseWriter: w} // use custom response writer to record status
-			before := time.Now()                             // record timestamp before request is handled
-			h.ServeHTTP(resrec, r)                           //
-			dur := time.Since(before)                        // calculate duration to handle request
+			resrec := &ResponseStatusRecorder{ResponseWriter: w} // use custom response writer to record status
+			before := time.Now()                                 // record timestamp before request is handled
+			h.ServeHTTP(resrec, r)                               //
+			dur := time.Since(before)                            // calculate duration to handle request
 
 			// Log
-			logstr := fmt.Sprintf("%d %-4s %5dμs %s", resrec.statusCode, r.Method, dur.Microseconds(), r.URL.Path)
+			logstr := fmt.Sprintf("%d %-4s %5dμs %s", resrec.StatusCode, r.Method, dur.Microseconds(), r.URL.Path)
 			logger.Log(logstr)
 		})
 	}
 }
 
-type httpStatusRecorder struct {
+type ResponseStatusRecorder struct {
 	http.ResponseWriter
-	statusCode int
+	StatusCode int
 }
 
-func (srec *httpStatusRecorder) WriteHeader(statusCode int) {
-	srec.statusCode = statusCode
+func (srec *ResponseStatusRecorder) WriteHeader(statusCode int) {
+	srec.StatusCode = statusCode
 	srec.ResponseWriter.WriteHeader(statusCode)
 }
 
