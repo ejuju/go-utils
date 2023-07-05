@@ -139,7 +139,7 @@ func MarginRight(v string) cssg.Decl              { return cssg.Decl{"margin-rig
 func MarginTop(v string) cssg.Decl                { return cssg.Decl{"margin-top", v} }
 func MaxHeight(v string) cssg.Decl                { return cssg.Decl{"max-height", v} }
 func MaxWidth(v string) cssg.Decl                 { return cssg.Decl{"max-width", v} }
-func MinHheight(v string) cssg.Decl               { return cssg.Decl{"min-height", v} }
+func MinHeight(v string) cssg.Decl                { return cssg.Decl{"min-height", v} }
 func MinWidth(v string) cssg.Decl                 { return cssg.Decl{"min-width", v} }
 func ObjectFit(v string) cssg.Decl                { return cssg.Decl{"object-fit", v} }
 func ObjectPosition(v string) cssg.Decl           { return cssg.Decl{"object-position", v} }
