@@ -1,8 +1,0 @@
-{
-	"env": "dev",
-	"host": "localhost",
-	"port": 8080,
-	"version": "DEV-1.0.2",
-	"admin_email_addr": "admin@local",
-	"log_file_path": "/tmp/go-utils.log.txt"
-}
